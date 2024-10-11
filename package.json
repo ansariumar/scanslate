@@ -1,0 +1,20 @@
+{
+  "name": "scanslatepy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "devStart": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.1",
+    "multer": "^1.4.5-lts.1",
+    "scanslatepy": "file:"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}

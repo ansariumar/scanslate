@@ -1,0 +1,60 @@
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  flex-direction: column;
+}
+
+.image-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.image-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 200px;
+  height: auto;
+}
+
+.image-wrapper canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: red;
+  color: white;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  font-size: 12px;
+  border-radius: 3px;
+}
+
+.selection-box {
+  position: absolute;
+  border: 2px dashed red;
+  pointer-events: none;
+  display: none;
+}
+
+#fileInput {
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .image-wrapper {
+    width: 150px;
+  }
+}

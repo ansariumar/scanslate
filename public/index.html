@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Image Upload with Cropping</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+            rel="stylesheet"
+        />
+        <link
+            href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css"
+            rel="stylesheet"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    </head>
+    <body class="bg-gray-100">
+        <!-- Navbar -->
+        <nav class="bg-blue-500 text-white p-4">
+            <div class="container mx-auto">
+                <h1 class="text-lg font-bold">Image Upload & Crop</h1>
+            </div>
+        </nav>
+
+        <!-- Upload and Preview Mode Toggle -->
+        <div class="container mx-auto mt-6 p-4">
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <!-- Upload Section -->
+                <div class="mb-4 flex items-center justify-between">
+                    <input
+                        type="file"
+                        name="img"
+                        id="imageUpload"
+                        multiple
+                        accept="image/*"
+                        class="mb-4"
+                    />
+                    <!-- Preview Toggle -->
+                    <label class="flex items-center">
+                        <input
+                        name="img2"
+                            id="togglePreview"
+                            type="checkbox"
+                            class="mr-2"
+                        />
+                        Enable Preview
+                    </label>
+                </div>
+                <div
+                    id="mainContainer"
+                    class="flex flex-row justify-center items-start h-screen"
+                >
+                    <!-- Image List Container -->
+                    <div
+                        id="imageListContainer"
+                        class="w-8/12 p-4 overflow-y-scroll"
+                        style="height: 48rem"
+                    >
+                        <!-- Image List will be appended here -->
+                        <div id="imageList" class="space-y-4"></div>
+                    </div>
+
+                    <!-- Preview Container (Initially hidden) -->
+                    <div id="previewContainer" class="w-1/2 p-4 hidden">
+                        <h2 class="text-lg font-bold mb-4">Image Preview</h2>
+                        <img
+                            id="previewImage"
+                            src=""
+                            alt="Preview"
+                            class="w-full h-auto rounded-lg"
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const imageUpload = document.getElementById("imageUpload");
+            const imageList = document.getElementById("imageList");
+            const togglePreview = document.getElementById("togglePreview");
+            const previewContainer =
+                document.getElementById("previewContainer");
+            const imageListContainer =
+                document.getElementById("imageListContainer");
+            const previewImage = document.getElementById("previewImage");
+
+            let cropperInstances = []; // Store cropper instances for each image
+            let originalImages = []; // Store original images for reset functionality
+
+            // Handle file uploads
+            imageUpload.addEventListener("change", (event) => {
+                const files = Array.from(event.target.files);
+                files.forEach((file) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const imageData = e.target.result;
+                        originalImages.push(imageData); // Store the original image
+                        displayImage(imageData);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            });
+
+            // Display uploaded images vertically with double-click to enable cropping
+            function displayImage(imageSrc) {
+                const imgDiv = document.createElement("div");
+                imgDiv.classList.add("relative", "p-2", "border", "rounded-lg");
+                imgDiv.tagName = "img";
+
+                const img = document.createElement("img");
+                img.src = imageSrc;
+                img.classList.add(
+                    "w-full",
+                    "h-auto",
+                    "rounded-lg",
+                    "cursor-pointer"
+                );
+
+                imgDiv.appendChild(img);
+                imageList.appendChild(imgDiv);
+
+                let cropper; // Define the cropper instance
+
+                img.addEventListener("dblclick", () => {
+                    if (!cropper) {
+                        // If no cropper exists, initialize a new cropper instance
+                        cropper = new Cropper(img, {
+                            viewMode: 1,
+                            autoCrop: false,
+                            zoomOnWheel: false,
+                            movable: false,
+                            cropend: () => {
+                                // Extract cropped image and convert to Blob
+                                const croppedCanvas =
+                                    cropper.getCroppedCanvas();
+                                if (croppedCanvas) {
+                                    croppedCanvas.toBlob((blob) => {
+                                        if (blob) {
+                                            // Create FormData to send the blob as a file
+                                            const formData = new FormData();
+                                            formData.append(
+                                                "cropped_image",
+                                                blob,
+                                                "cropped_image.png"
+                                            );
+
+                                            // Send the FormData to your backend using Axios
+                                            axios.post("http://localhost:3000/image", formData, {
+                                                    headers: {
+                                                        "Content-Type": "multipart/form-data",
+                                                        "Accept": 'application/json'
+                                                    },
+                                                })
+                                                .then((response) => {
+                                                    console.log(
+                                                        "Image uploaded successfully:",
+                                                        response.data
+                                                    );
+
+                                                    // Set the preview image from the server response
+                                                    previewImage.src =
+                                                        response.data.image_url;
+                                                })
+                                                .catch((error) => {
+                                                    console.error(
+                                                        "Image upload failed:",
+                                                        error
+                                                    );
+                                                });
+                                        }
+                                    }, "image/png"); // You can change the format to 'image/jpeg' if needed
+                                }
+
+                                const index = cropperInstances.indexOf(cropper);
+                                resetImage(cropper, index);
+                            },
+                        });
+                        cropperInstances.push(cropper);
+                    }
+
+                    // Reset the image on Esc key
+                    document.addEventListener("keydown", (event) => {
+                        if (event.key === "Escape") {
+                            const index = cropperInstances.indexOf(cropper);
+                            resetImage(cropper, index);
+                        }
+                    });
+                });
+            }
+
+            // Reset image to original when Esc is pressed
+            function resetImage(cropper, index) {
+                cropper.reset(); // Reset cropper instance
+                cropper.replace(originalImages[index]); // Replace with original image
+                previewImage.src = ""; // Clear the preview when resetting the image
+            }
+
+            // Toggle preview mode
+            togglePreview.addEventListener("change", () => {
+                if (togglePreview.checked) {
+                    // If preview mode is enabled, image list takes half width and preview shows up
+                    imageListContainer.classList.remove("w-full");
+                    imageListContainer.classList.add("w-1/2");
+                    previewContainer.classList.remove("hidden");
+                } else {
+                    // If preview mode is disabled, image list takes full width and preview hides
+                    imageListContainer.classList.remove("w-1/2");
+                    imageListContainer.classList.add("w-full");
+                    previewContainer.classList.add("hidden");
+                }
+            });
+        </script>
+    </body>
+</html>
