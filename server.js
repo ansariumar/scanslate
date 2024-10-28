@@ -13,9 +13,7 @@ app.use('/public', express.static(__dirname + '/public'));
 app.use('/image', imageRouter)
 
 app.get('/', (req, res) => {
-  const spawn = require('child_process');
   res.send(req.body.data)
-//   const pyProg = spawn('python', ['./ocr.py', req.body.data]);
 
 })
 

@@ -4,7 +4,10 @@ from cv2 import dnn_superres
 import numpy as np
 import time
 
-image = cv2.imread('./img/frfr.png')
+
+# print(ocr.imageName, "was successfully retrieved")
+
+
 
 
 # #----------------CV2 Enhancer------------------------------
@@ -54,17 +57,25 @@ def upscaler(image):
 # #----------------------CV2 end-----------------------------
 
 
-start_time = time.time()
+def enhance(imageName):
+    
+    
+    image = cv2.imread(f"./img/uploads/{imageName}")
+    # print(f"./img/uploads/{image}.png")
 
-finalImage = enhancer(sharpen((binarize(denoise(image)))))  #returns numpy.ndarray
 
-print("--- %s seconds ---" % (time.time() - start_time))
+    start_time = time.time()
 
-status = cv2.imwrite("./img/enhancedImg/img.png", finalImage)
+    finalImage = enhancer(sharpen((binarize(denoise(image)))))  #returns numpy.ndarray
 
-# cv2.imshow("Best image V@", finalImage)
+    print("--- %s seconds ---" % (time.time() - start_time))
 
-# cv2.waitKey(0)
+    status = cv2.imwrite(f"./img/enhancedImg/{imageName}.png", finalImage)
+
+    
+
+# print(enhance("1729529307643-cropped_image.png"))
+
 
 
 
