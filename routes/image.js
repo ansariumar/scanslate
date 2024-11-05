@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
-const { exec } = require('child_process');
+const { spawnSync } = require('child_process');
+const fs = require('node:fs');
 
 
 
@@ -25,49 +24,38 @@ const upload = multer({ storage: storage });
 
 
 router.post('/', upload.single('cropped_image'), async (req, res) => {
-    
+    let extractedText;
+
     console.log(req.file);
     if (!req.file) {
         return res.status(400).send('No file uploaded.');
     }
 
-    // exec(`python ocr.py ${req.file.filename}`, async(error, stdout, stderr) => {
-    //     if (error) {
-    //         console.error(`exec error: ${error}`);
-    //         return;
-    //     }
-    //     if (stderr) {
-    //         console.error(`stderr: ${stderr}`); 
-    //         return;
-    //     }
+    console.time("test_timer");
 
-    //     console.log(`stdout: ${stdout}`);
-    // })
-    spawnTranslation(req.file.filename);
+    callOcr(req.file.filename);
+
+    console.timeEnd("test_timer");
+
+
+    extractedText = fs.readFileSync('E:/Projects/scanslatePY/translation.txt', 'utf8');
+
+    res.status(200).json({ message: 'File uploaded successfully.', image_url:`./../uploads/${req.file.filename}`, path: req.file.path, extractedText: extractedText });
     
-
-    res.status(200).json({ message: 'File uploaded successfully.', image_url:`./../uploads/${req.file.filename}`, path: req.file.path });
     
 });
 
-function spawnTranslation(fileName) {
-    const child = spawn('python', ['ocr.py', fileName]);
-
-    child.stdout.on('data', (data) => {
-        console.log(`stdout: ${data.toString()}`);
-    });
-
-    child.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`);
-    });
-
-    child.on('error', (error) => {
-        console.error(`error: ${error}`);
-    });
-
-    child.on('exit', (code, signal) => {
-        console.log(`child process exited with code ${code} and signal ${signal}`);
-    });
+function callOcr(filename) {
+    const result = spawnSync('python', ['ocr.py', filename]);
+  
+    if (result.error) {
+        console.error('Error:', result.error);
+    } else {
+        // console.log('Output:', result.stdout);
+        // console.error('Error Output:', result.stderr);
+    }
 }
+
+
 
 module.exports = router;

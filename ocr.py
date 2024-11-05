@@ -3,10 +3,18 @@ from manga_ocr import MangaOcr
 import time
 import sys
 from enhancer import enhance
+import google.generativeai as genai
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+genai.configure(api_key=os.getenv("API_GEMINI"))
+model = genai.GenerativeModel("gemini-1.5-flash")
+
 
 imageName = sys.argv[1]
 
-# print(imageName)
 print("Enhancing the image...")
 status = enhance(imageName)
 
@@ -18,17 +26,15 @@ img = Image.open(f'./img/enhancedImg/{imageName}.png')
 
 mocr = MangaOcr()
 
-# start_time = time.time()
-print("translating...")
+
+print("extrating...")
 text = mocr(img)
-print("TEXT TYPE IS: ",type(text))
+
+response = model.generate_content(f"This is the japanese text and you have to translate it into English, just give me the translation and nothing else {text}")
+print(response.text)
 
 with open('translation.txt', 'w', encoding='utf-8') as file1:
-    file1.write(text)
-
-
-# print(text.encode('utf-8', 'replace').decode('utf-8'))
-# print("--- %s seconds ---" % (time.time() - start_time))
+    file1.write(response.text)
 
 
 

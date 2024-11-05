@@ -15,6 +15,36 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
+        <style>
+            #previewImages {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 16px; /* Space between images */
+                justify-content: center;
+                padding: 20px;
+            }
+
+            /* Image Wrapper Styling */
+            .img-wrapper {
+                position: relative;
+                overflow: hidden;
+                max-height: 400px; /* Restrict image height for better appearance */
+                border-radius: 12px;
+                box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease;
+            }
+
+            .img-wrapper:hover {
+                transform: scale(1.05); /* Slight zoom effect on hover */
+            }
+
+            /* Image Styling */
+            img {
+                width: 100%;
+                height: auto;
+                object-fit: cover;
+            }
+        </style>
     </head>
     <body class="bg-gray-100">
         <!-- Navbar -->
@@ -55,16 +85,17 @@
                     <!-- Image List Container -->
                     <div
                         id="imageListContainer"
-                        class="w-8/12 p-4 overflow-y-scroll"
-                        style="height: 48rem"
+                        class="w-full md:w-8/12 p-4 overflow-y-scroll"
+                        style="height: 45rem"
                     >
                         <!-- Image List will be appended here -->
-                        <div id="imageList" class="space-y-4"></div>
+                        <div id="imageList" class="space-y-4 max-w-full"></div>
                     </div>
 
                     <!-- Preview Container (Initially hidden) -->
                     <div id="previewContainer" class="w-1/2 p-4 hidden">
                         <h2 class="text-lg font-bold mb-4">Image Preview</h2>
+                        <div id="previewImages" style="height: 40rem;" class="space-y-4 overflow-y-scroll"></div>
                         <img
                             id="previewImage"
                             src=""
@@ -85,6 +116,7 @@
             const imageListContainer =
                 document.getElementById("imageListContainer");
             const previewImage = document.getElementById("previewImage");
+            const previewImages = document.getElementById("previewImages");
 
             let cropperInstances = []; // Store cropper instances for each image
             let originalImages = []; // Store original images for reset functionality
@@ -127,10 +159,11 @@
                     if (!cropper) {
                         // If no cropper exists, initialize a new cropper instance
                         cropper = new Cropper(img, {
-                            viewMode: 1,
+                            viewMode: 2,
                             autoCrop: false,
                             zoomOnWheel: false,
                             movable: false,
+                            responsive: false,
                             cropend: () => {
                                 // Extract cropped image and convert to Blob
                                 const croppedCanvas =
@@ -147,6 +180,7 @@
                                             );
 
                                             // Send the FormData to your backend using Axios
+
                                             axios.post("http://localhost:3000/image", formData, {
                                                     headers: {
                                                         "Content-Type": "multipart/form-data",
@@ -159,9 +193,19 @@
                                                         response.data
                                                     );
 
-                                                    // Set the preview image from the server response
-                                                    previewImage.src =
-                                                        response.data.image_url;
+                                                    const img = document.createElement("img");  //Element for the preview image
+                                                    // const text = document.createElement("div"); //Element for the extracted text
+                                                    const textNode = document.createTextNode(response.data.extractedText);
+                                                    // text.innerText = response.data.extractedText;
+                                                    img.src = response.data.image_url;
+                                                    img.classList.add("w-full", "h-auto","m-4", "block" ,"rounded-lg", "cursor-pointer");
+
+                                                    const imgWrapper = document.createElement("div");
+                                                    imgWrapper.classList.add("img-wrapper"); // add wrapper class
+                                                    imgWrapper.appendChild(textNode);
+                                                    imgWrapper.appendChild(img);
+                                                    previewImages.appendChild(imgWrapper);
+
                                                 })
                                                 .catch((error) => {
                                                     console.error(
